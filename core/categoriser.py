@@ -78,6 +78,7 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "restaurant":        "Food & Drink",
     "cafe":              "Food & Drink",
     "bakery":            "Food & Drink",
+    "food panda":        "Food & Drink",
     # Subscriptions
     "spotify":           "Subscriptions",
     "netflix":           "Subscriptions",
@@ -95,6 +96,7 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "notion":            "Subscriptions",
     "dropbox":           "Subscriptions",
     "icloud":            "Subscriptions",
+    "youtube premium":   "Subscriptions",
     # Transport
     "comfort":           "Transport",
     "comfortdelgro":     "Transport",
@@ -188,6 +190,9 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     # Income — keyword fallback only; bidirectional codes handle most salary
     "salary credit":     "Income",
     "payroll":           "Income",
+    # Others
+    "interactive brokers": "Investments",
+    "top-up to paylah!":   "Transfers"
 }
 
 

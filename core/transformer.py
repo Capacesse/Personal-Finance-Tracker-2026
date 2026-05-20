@@ -97,14 +97,20 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     # ── Dates ─────────────────────────────────────────────────────────────────
+    # Parse to datetime objects first (handling Day/Month/Year formats)
     df["transaction_date"] = pd.to_datetime(
-        df["transaction_date"], errors="coerce"
+        df["transaction_date"], 
+        format="mixed", 
+        dayfirst=True, 
+        errors="coerce"
     )
-    bad = df["transaction_date"].isna().sum()
-    if bad:
-        log.warning("%d row(s) with unparseable dates dropped.", bad)
+
+    bad_dates = df["transaction_date"].isna().sum()
+    if bad_dates:
+        log.warning("%d row(s) had unparseable dates and will be dropped.", bad_dates)
     df = df.dropna(subset=["transaction_date"])
-    df["year_month"]       = df["transaction_date"].dt.strftime("%Y-%m")
+
+    df["year_month"] = df["transaction_date"].dt.strftime("%Y-%m")
     df["transaction_date"] = df["transaction_date"].dt.strftime("%Y-%m-%d")
 
     # ── Amounts ───────────────────────────────────────────────────────────────
@@ -164,33 +170,34 @@ def _compute_hash(date: str, amount: float, description: str) -> str:
 def _normalise_merchant(description: str) -> str:
     """
     Produce a clean, canonical merchant name from a raw bank description.
-
-    Steps (in order):
-    1. Strip leading reference numbers (e.g. '00812 GRAB FOOD')
-    2. Strip trailing reference suffixes (e.g. 'GRAB*001234')
-    3. Remove noise tokens (PTE LTD, SINGAPORE, etc.)
-    4. Collapse whitespace and cap length
-    5. Apply MERCHANT_ALIASES for known variant → canonical mappings
+    Includes aggressive stripping for DBS terminal noise.
     """
-    name = description
+    # Force uppercase immediately for consistent regex matching
+    name = description.upper()
 
-    # 1. Leading digits
+    # 1. Strip the standard DBS card terminal suffix (e.g., " SI SGP 02JAN 5264...")
+    name = re.sub(r'\s+(SI )?SGP\s+\d{2}[A-Z]{3}.*$', '', name)
+
+    # 2. Strip Grab/FoodPanda/Google hex codes and prefixes
+    name = re.sub(r'^GRAB\*\s*(GPC-)?[A-F0-9]+\s*', 'GRAB ', name)
+    name = name.replace('FP*FOOD PANDA', 'FOOD PANDA')
+    name = name.replace('GOOGLE*YOUTUBEPREMIUM', 'YOUTUBE PREMIUM')
+    name = re.sub(r'\s+SG\s*$', '', name)
+
+    # 3. Existing logic: Leading digits & Trailing reference codes
     name = _REF_PREFIX.sub("", name)
-
-    # 2. Trailing reference codes
     name = _REF_SUFFIX.sub("", name)
 
-    # 3. Noise tokens
+    # 4. Existing logic: Noise tokens
     for token in _NOISE_TOKENS:
         name = name.replace(token, "")
 
-    # 4. Whitespace + length cap
+    # 5. Existing logic: Whitespace + length cap
     name = _WHITESPACE.sub(" ", name).strip()[:45]
 
-    # 5. Alias resolution — check each alias key as a substring
-    name_upper = name.upper()
+    # 6. Existing logic: Alias resolution
     for alias, canonical in MERCHANT_ALIASES.items():
-        if alias in name_upper:
+        if alias in name:
             return canonical
 
     return name
