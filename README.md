@@ -1,4 +1,4 @@
-# 💳 Personal Finance Engine
+# 💳 Personal Finance Tracker
 
 A local, automated personal finance pipeline that extracts your DBS/POSB bank
 transaction history, categorises merchants intelligently, and displays an
