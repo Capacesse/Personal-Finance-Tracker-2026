@@ -79,6 +79,16 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "cafe":              "Food & Drink",
     "bakery":            "Food & Drink",
     "food panda":        "Food & Drink",
+    "yqueue":            "Food & Drink",
+    "dabba street":      "Food & Drink",
+    "wingstop":          "Food & Drink",
+    "shiok burger":      "Food & Drink",
+    "chagee":            "Food & Drink",
+    "supersnacks":       "Food & Drink",
+    "stuff'd":           "Food & Drink",
+    "coffee":            "Food & Drink",
+    "beviamo":           "Food & Drink",
+    "f&b":               "Food & Drink",
     # Subscriptions
     "spotify":           "Subscriptions",
     "netflix":           "Subscriptions",
@@ -88,7 +98,8 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "amazon prime":      "Subscriptions",
     "disney+":           "Subscriptions",
     "disneyplus":        "Subscriptions",
-    "youtube premium":   "Subscriptions",
+    "youtube":           "Subscriptions",
+    "youtubepremium":    "Subscriptions",
     "microsoft 365":     "Subscriptions",
     "adobe":             "Subscriptions",
     "chatgpt":           "Subscriptions",
@@ -96,13 +107,16 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "notion":            "Subscriptions",
     "dropbox":           "Subscriptions",
     "icloud":            "Subscriptions",
-    "youtube premium":   "Subscriptions",
+    "subscriptiongrab":  "Subscriptions",   
+    "amznprimesg":       "Subscriptions",
     # Transport
     "comfort":           "Transport",
     "comfortdelgro":     "Transport",
     "cdg":               "Transport",
     "gojek":             "Transport",
     "uber":              "Transport",
+    "grab":              "Transport",       # Captures Grab rides (Note: also catches GrabFood)
+    "grabpay":           "Transport",       # Captures overseas GrabPay
     "grab transport":    "Transport",
     "grab car":          "Transport",
     "grab taxi":         "Transport",
@@ -140,6 +154,7 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "anytime fitness":   "Health & Wellness",
     "pure fitness":      "Health & Wellness",
     "activesg":          "Health & Wellness",
+    "hockhua":           "Health & Wellness",
     # Utilities
     "singapore power":   "Utilities",
     "sp services":       "Utilities",
@@ -164,6 +179,8 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "challenger":        "Shopping",
     "wristcheck":        "Shopping",
     "taobao":            "Shopping",
+    "shein":             "Shopping",
+    "aliexpress":        "Shopping",
     # Entertainment
     "cathay":            "Entertainment",
     "golden village":    "Entertainment",
@@ -175,6 +192,7 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "bowling":           "Entertainment",
     "ktv":               "Entertainment",
     "karaoke":           "Entertainment",
+    "have fun":          "Entertainment",
     # Education
     "nus":               "Education",
     "ntu":               "Education",
@@ -250,3 +268,10 @@ def _keyword_match(description: str) -> str:
         if keyword in desc_lower:
             return category
     return "Uncategorised"
+
+# def _keyword_match(description: str) -> str:
+#     desc_lower = str(description).lower()
+#     for keyword, category in MERCHANT_CATEGORY_MAP.items():
+#         if keyword.strip().lower() in desc_lower:
+#             return category
+#     return "Uncategorised"
