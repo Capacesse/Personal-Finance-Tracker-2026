@@ -218,3 +218,25 @@ def agg_category_share(df_expenses: pd.DataFrame) -> pd.DataFrame:
     else:
         cat_df["share_pct"] = (cat_df["spent"] / total * 100).round(1)
     return cat_df
+
+
+def load_budgets(db_path: str) -> pd.DataFrame:
+    """Loads the user's defined budget limits."""
+    if not Path(db_path).exists():
+        return pd.DataFrame(columns=["category", "monthly_limit"])
+        
+    conn = sqlite3.connect(db_path)
+    df = pd.read_sql_query("SELECT category, monthly_limit FROM Budgets", conn)
+    conn.close()
+    return df
+
+
+def save_budgets(db_path: str, df_budgets: pd.DataFrame) -> None:
+    """Overwrites the Budgets table with updated limits from the UI."""
+    conn = sqlite3.connect(db_path)
+    # Replace the whole table with the new limits
+    df_budgets.to_sql("Budgets", conn, if_exists="replace", index=False)
+    conn.commit()
+    conn.close()
+    # Clear the Streamlit cache so the dashboard immediately reflects the new limits
+    st.cache_data.clear()

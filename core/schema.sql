@@ -104,6 +104,14 @@ CREATE INDEX IF NOT EXISTS idx_txn_hash     ON Transactions(transaction_hash);
 CREATE INDEX IF NOT EXISTS idx_merchant_cat ON Merchants(category_id);
 
 -- ------------------------------------------------------------
+-- Table 5: Budgets
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS Budgets (
+    category VARCHAR PRIMARY KEY,
+    monthly_limit REAL NOT NULL DEFAULT 0.0
+);
+
+-- ------------------------------------------------------------
 -- Denormalised read view
 -- ------------------------------------------------------------
 CREATE VIEW IF NOT EXISTS v_transactions_full AS

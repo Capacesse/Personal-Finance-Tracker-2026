@@ -10,6 +10,7 @@ Run:
 """
 
 import argparse
+import pandas as pd
 import streamlit as st
 
 from dashboard.charts import (
@@ -21,6 +22,7 @@ from dashboard.charts import (
     build_top_merchants_bar,
 )
 from dashboard.data import (
+    EXCLUDE_FROM_SPEND,
     agg_by_category,
     agg_category_share,
     agg_daily_spend,
@@ -30,6 +32,8 @@ from dashboard.data import (
     get_full_view,
     get_month_scoped,
     load_all_transactions,
+    load_budgets,
+    save_budgets
 )
 from dashboard.filters import render_sidebar
 from dashboard.kpis import render_kpi_row
@@ -126,3 +130,32 @@ st.markdown("---")
 render_uncategorised_review(df_all)
 st.markdown("---")
 render_transaction_log(df_full)
+st.markdown("---")
+st.subheader("🎯 Monthly Budget Targets")
+
+df_budgets = load_budgets(DB_PATH)
+
+if df_budgets.empty:
+    all_cats = [c for c in df_all["category"].unique() if c not in EXCLUDE_FROM_SPEND]
+    df_budgets = pd.DataFrame({"category": all_cats, "monthly_limit": 0.0})
+
+edited_budgets = st.data_editor(
+    df_budgets,
+    use_container_width=True,
+    num_rows="dynamic", # Lets you add or delete rows
+    column_config={
+        "category": st.column_config.TextColumn("Category", disabled=True),
+        "monthly_limit": st.column_config.NumberColumn(
+            "Monthly Limit (SGD)", 
+            min_value=0.0, 
+            format="$ %.2f"
+        )
+    },
+    hide_index=True,
+    key="budget_editor"
+)
+
+if st.button("Save Budget Limits", type="primary"):
+    save_budgets(DB_PATH, edited_budgets)
+    st.success("✅ Budgets successfully updated!")
+    st.rerun()
