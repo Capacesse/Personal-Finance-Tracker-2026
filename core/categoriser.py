@@ -221,7 +221,7 @@ def categorise(
     Tier 2  — High-signal code:   known, not generic → trust DB mapping
     Tier 3  — Merchant keyword:   generic/missing code + keyword match
     Tier 4  — Low-signal fallback: generic code, no keyword → broad DB category
-    Tier 5  — Absolute fallback:  'Uncategorised'
+    Tier 5  — Last fallback:  'Uncategorised'
     """
     is_valid   = isinstance(code, str) and bool(code)
     in_db      = is_valid and code in code_cache
