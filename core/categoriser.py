@@ -6,53 +6,32 @@ Imported by etl.py (persistent mode) and app.py (session mode).
 """
 
 # ── Generic codes ─────────────────────────────────────────────────────────────
-# Valid DBS codes that carry too little signal to override a keyword match.
-# All verified against the DBS reference file.
 GENERIC_CODES: frozenset[str] = frozenset({
-    "MST",   # Debit Card Transaction
-    "POS",   # Point-of-Sale Transaction
-    "NETS",  # Point-of-Sale Transaction (NETS terminal)
-    "BAT",   # Debit Card Transaction (variant)
-    "DEP",   # Deposit (generic inward)
-    "WDL",   # Withdrawal (generic outbound)
-    "AWL",   # Cash Withdrawal  ← also in CASH_CODES below
-    "CCCC",  # NETS Proceeds
+    "MST", "POS", "NETS", "BAT", "DEP", "WDL", "AWL", "CCCC",
 })
 
 # ── Bidirectional codes ───────────────────────────────────────────────────────
-# These codes appear on both inbound (Income) and outbound (PayNow & FAST)
-# transactions.  The sign of `amount` is the tiebreaker.
 BIDIRECTIONAL_CODES: frozenset[str] = frozenset({
-    "ICT",   # Instant Credit Transfer (FAST / PayNow)
-    "GR",    # GIRO
-    "GRP",   # GIRO Payroll
-    "GRS",   # GIRO Payroll (variant)
-    "GRC",   # GIRO Credit
-    "GRB",   # GIRO Bulk
-    "IBG",   # Interbank GIRO
-    "DCR",   # Instant Direct Credit
-    "DCRT",  # Instant Direct Credit Transfer
-    "PAY",   # Payment (DBS internal)
+    "ICT", "GR", "GRP", "GRS", "GRC", "GRB", "IBG", "DCR", "DCRT", "PAY",
 })
 
 # ── Cash withdrawal codes ─────────────────────────────────────────────────────
-# These always map to 'Cash Withdrawals' regardless of direction.
 CASH_CODES: frozenset[str] = frozenset({
-    "AWL",   # Cash Withdrawal
-    "WDL",   # Withdrawal
-    "NWL",   # Cash Withdrawal Others
-    "C-WDL", # CIRRUS Cash Withdrawal
-    "ATM",   # ATM Transactions
+    "AWL", "WDL", "NWL", "C-WDL", "ATM",
 })
 
 # ── Merchant keyword map ──────────────────────────────────────────────────────
-# Consulted when the transaction code is generic or absent.
-# Keys are lowercase substrings matched against the normalised description.
+# ORDERING RULE: longer / more specific strings must come before shorter ones
+# that are substrings of them.  E.g. "grab food" before any bare "grab*"
+# entry, or the shorter key wins first.  There is NO bare "grab" entry here
+# for exactly this reason — it would swallow GrabFood orders into Transport.
 MERCHANT_CATEGORY_MAP: dict[str, str] = {
-    # Food & Drink
+    # ── Food & Drink ──────────────────────────────────────────────────────────
     "grab food":         "Food & Drink",
     "grabfood":          "Food & Drink",
+    "food panda":        "Food & Drink",
     "foodpanda":         "Food & Drink",
+    "fp*food panda":     "Food & Drink",
     "deliveroo":         "Food & Drink",
     "mcdonald":          "Food & Drink",
     "fairprice":         "Food & Drink",
@@ -78,7 +57,6 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "restaurant":        "Food & Drink",
     "cafe":              "Food & Drink",
     "bakery":            "Food & Drink",
-    "food panda":        "Food & Drink",
     "yqueue":            "Food & Drink",
     "dabba street":      "Food & Drink",
     "wingstop":          "Food & Drink",
@@ -89,17 +67,20 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "coffee":            "Food & Drink",
     "beviamo":           "Food & Drink",
     "f&b":               "Food & Drink",
-    # Subscriptions
+
+    # ── Subscriptions ─────────────────────────────────────────────────────────
     "spotify":           "Subscriptions",
     "netflix":           "Subscriptions",
     "apple.com/bill":    "Subscriptions",
     "apple.com":         "Subscriptions",
     "google play":       "Subscriptions",
     "amazon prime":      "Subscriptions",
+    "amznprimesg":       "Subscriptions",
     "disney+":           "Subscriptions",
     "disneyplus":        "Subscriptions",
-    "youtube":           "Subscriptions",
     "youtubepremium":    "Subscriptions",
+    "youtube":           "Subscriptions",
+    "google*youtube":    "Subscriptions",
     "microsoft 365":     "Subscriptions",
     "adobe":             "Subscriptions",
     "chatgpt":           "Subscriptions",
@@ -107,19 +88,22 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "notion":            "Subscriptions",
     "dropbox":           "Subscriptions",
     "icloud":            "Subscriptions",
-    "subscriptiongrab":  "Subscriptions",   
-    "amznprimesg":       "Subscriptions",
-    # Transport
+    "subscriptiongrab":  "Subscriptions",
+    "grab subscription": "Subscriptions",   # Grab Premium subscription
+
+    # ── Transport ─────────────────────────────────────────────────────────────
+    # NOTE: No bare "grab" entry — it would incorrectly catch GrabFood orders.
+    "grab transport":    "Transport",
+    "grab car":          "Transport",
+    "grab taxi":         "Transport",
+    "grab ride":         "Transport",
+    "grabpay-ec":        "Transport",       # overseas GrabPay (MYS/etc) — almost always transport
+    "grab":              "Transport",       # bare GRAB card transaction — cannot distinguish food vs transport;
     "comfort":           "Transport",
     "comfortdelgro":     "Transport",
     "cdg":               "Transport",
     "gojek":             "Transport",
     "uber":              "Transport",
-    "grab":              "Transport",       # Captures Grab rides (Note: also catches GrabFood)
-    "grabpay":           "Transport",       # Captures overseas GrabPay
-    "grab transport":    "Transport",
-    "grab car":          "Transport",
-    "grab taxi":         "Transport",
     "transit link":      "Transport",
     "transitlink":       "Transport",
     "ez-link":           "Transport",
@@ -133,11 +117,11 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "caltex":            "Transport",
     "spc":               "Transport",
     "koolex":            "Transport",
-    "grab ride":         "Transport",
     "tada":              "Transport",
     "ryde":              "Transport",
     "phv":               "Transport",
-    # Health & Wellness
+
+    # ── Health & Wellness ─────────────────────────────────────────────────────
     "watsons":           "Health & Wellness",
     "guardian":          "Health & Wellness",
     "unity pharmacy":    "Health & Wellness",
@@ -155,7 +139,8 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "pure fitness":      "Health & Wellness",
     "activesg":          "Health & Wellness",
     "hockhua":           "Health & Wellness",
-    # Utilities
+
+    # ── Utilities ─────────────────────────────────────────────────────────────
     "singapore power":   "Utilities",
     "sp services":       "Utilities",
     "sp group":          "Utilities",
@@ -165,14 +150,15 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "myrepublic":        "Utilities",
     "viewqwest":         "Utilities",
     "pub ":              "Utilities",    # trailing space avoids matching 'public'
-    # Shopping
+
+    # ── Shopping ──────────────────────────────────────────────────────────────
     "ikea":              "Shopping",
     "uniqlo":            "Shopping",
     "zara":              "Shopping",
     "h&m":               "Shopping",
     "lazada":            "Shopping",
     "shopee":            "Shopping",
-    "amazon":            "Shopping",
+    "amazon":            "Shopping",    # after "amazon prime" / "amznprimesg"
     "courts":            "Shopping",
     "harvey norman":     "Shopping",
     "best denki":        "Shopping",
@@ -181,7 +167,8 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "taobao":            "Shopping",
     "shein":             "Shopping",
     "aliexpress":        "Shopping",
-    # Entertainment
+
+    # ── Entertainment ─────────────────────────────────────────────────────────
     "cathay":            "Entertainment",
     "golden village":    "Entertainment",
     "gv ":               "Entertainment",
@@ -193,7 +180,8 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "ktv":               "Entertainment",
     "karaoke":           "Entertainment",
     "have fun":          "Entertainment",
-    # Education
+
+    # ── Education ─────────────────────────────────────────────────────────────
     "nus":               "Education",
     "ntu":               "Education",
     "smu":               "Education",
@@ -205,12 +193,16 @@ MERCHANT_CATEGORY_MAP: dict[str, str] = {
     "coursera":          "Education",
     "udemy":             "Education",
     "skillsfuture":      "Education",
-    # Income — keyword fallback only; bidirectional codes handle most salary
+
+    # ── Investments ───────────────────────────────────────────────────────────
+    "interactive brokers": "Investments",
+
+    # ── Transfers ─────────────────────────────────────────────────────────────
+    "top-up to paylah!": "Transfers",
+
+    # ── Income (keyword fallback — bidirectional codes handle most salary) ────
     "salary credit":     "Income",
     "payroll":           "Income",
-    # Others
-    "interactive brokers": "Investments",
-    "top-up to paylah!":   "Transfers"
 }
 
 
@@ -221,13 +213,14 @@ def categorise(
     code_cache: dict[str, str],
 ) -> str:
     """
-    5-Tier Confidence System — returns the best category name.
+    5-Tier Confidence System.
 
-    Tier 1a — Cash code:          AWL/WDL/ATM etc → always 'Cash Withdrawals'
+    Tier 0  — Manual override:    description substring → hardcoded category
+    Tier 1a — Cash code:          AWL/WDL/ATM → always 'Cash Withdrawals'
     Tier 1b — Bidirectional code: sign of amount → 'Income' or 'PayNow & FAST'
     Tier 2  — High-signal code:   known, not generic → trust DB mapping
-    Tier 3  — Merchant keyword:   generic/missing code + description match
-    Tier 4  — Low-signal code:    generic code, unknown merchant → broad DB mapping
+    Tier 3  — Merchant keyword:   generic/missing code + keyword match
+    Tier 4  — Low-signal fallback: generic code, no keyword → broad DB category
     Tier 5  — Absolute fallback:  'Uncategorised'
     """
     is_valid   = isinstance(code, str) and bool(code)
@@ -239,23 +232,23 @@ def categorise(
     keyword_cat = _keyword_match(description)
     keyword_hit = keyword_cat != "Uncategorised"
 
-    # Tier 1a: cash withdrawal codes are unambiguous
+    # Tier 1a
     if is_cash:
         return "Cash Withdrawals"
 
-    # Tier 1b: bidirectional — amount sign determines direction
+    # Tier 1b
     if is_bidir:
         return "Income" if amount > 0 else "PayNow & FAST"
 
-    # Tier 2: high-signal, specific code
+    # Tier 2
     if in_db and not is_generic:
         return code_cache[code]
 
-    # Tier 3: merchant keyword beats a generic code
+    # Tier 3
     if keyword_hit:
         return keyword_cat
 
-    # Tier 4: generic code with no keyword match — broad category is better than nothing
+    # Tier 4
     if in_db:
         return code_cache[code]
 
@@ -268,10 +261,3 @@ def _keyword_match(description: str) -> str:
         if keyword in desc_lower:
             return category
     return "Uncategorised"
-
-# def _keyword_match(description: str) -> str:
-#     desc_lower = str(description).lower()
-#     for keyword, category in MERCHANT_CATEGORY_MAP.items():
-#         if keyword.strip().lower() in desc_lower:
-#             return category
-#     return "Uncategorised"

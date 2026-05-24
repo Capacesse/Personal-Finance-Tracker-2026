@@ -1,12 +1,12 @@
 """
-dashboard.py — Entry Point
-===========================
+app.py — Entry Point
+=====================
 Orchestrates the modular dashboard components.
 No business logic, no SQL, no chart construction lives here.
 
 Run:
-    streamlit run dashboard.py
-    streamlit run dashboard.py -- --db path/to/finance.db
+    streamlit run app.py
+    streamlit run app.py -- --db path/to/finance.db
 """
 
 import argparse
@@ -26,7 +26,6 @@ from dashboard.data import (
     agg_daily_spend,
     agg_monthly_trend,
     agg_top_merchants,
-    agg_uncategorised,
     get_expense_view,
     get_full_view,
     get_month_scoped,
@@ -71,22 +70,22 @@ state = render_sidebar(df_all, DB_PATH)
 
 # ── 3. Derive filtered views ──────────────────────────────────────────────────
 
-df_month_scope = get_month_scoped(df_all, state)   # for KPIs & income chart
-df_expenses    = get_expense_view(df_all, state)   # for spend charts
-df_full        = get_full_view(df_all, state)      # for transaction log
+df_month_scope = get_month_scoped(df_all, state)  # KPIs & income chart
+df_expenses    = get_expense_view(df_all, state)  # all spend charts
+df_full        = get_full_view(df_all, state)     # transaction log
 
-# ── 4. Pre-aggregate (once, reused by multiple charts) ────────────────────────
+# ── 4. Pre-aggregate once — reused by multiple charts ────────────────────────
 
-cat_df    = agg_by_category(df_expenses)
-share_df  = agg_category_share(df_expenses)
-trend_df  = agg_monthly_trend(df_expenses)
-daily_df  = agg_daily_spend(df_expenses)
-merch_df  = agg_top_merchants(df_expenses)
-uncat_df  = agg_uncategorised(df_all)
+cat_df   = agg_by_category(df_expenses)
+share_df = agg_category_share(df_expenses)
+trend_df = agg_monthly_trend(df_expenses)
+daily_df = agg_daily_spend(df_expenses)
+merch_df = agg_top_merchants(df_expenses)
 
 # ── 5. Render ─────────────────────────────────────────────────────────────────
 
-st.title("💳 Personal Finance Engine")
+st.title("💳 Personal Finance Tracker")
+
 months_label = (
     ", ".join(state.selected_months)
     if len(state.selected_months) <= 3
@@ -94,38 +93,36 @@ months_label = (
 )
 st.caption(f"Showing {len(df_expenses):,} expense transactions · {months_label}")
 
-# KPI row
 render_kpi_row(df_month_scope, df_expenses)
 st.markdown("---")
 
 # Row 1 — Category breakdown + monthly trend
-r1_left, r1_right = st.columns(2)
-with r1_left:
+r1_l, r1_r = st.columns(2)
+with r1_l:
     st.plotly_chart(build_category_bar(cat_df), use_container_width=True)
-with r1_right:
+with r1_r:
     st.plotly_chart(build_monthly_trend_bar(trend_df), use_container_width=True)
 
 st.markdown("---")
 
 # Row 2 — Category share + income vs spend
-r2_left, r2_right = st.columns(2)
-with r2_left:
+r2_l, r2_r = st.columns(2)
+with r2_l:
     st.plotly_chart(build_category_share_bar(share_df), use_container_width=True)
-with r2_right:
+with r2_r:
     st.plotly_chart(build_income_vs_spend_bar(df_month_scope), use_container_width=True)
 
 st.markdown("---")
 
 # Row 3 — Daily spend + top merchants
-r3_left, r3_right = st.columns(2)
-with r3_left:
+r3_l, r3_r = st.columns(2)
+with r3_l:
     st.plotly_chart(build_daily_spend_bar(daily_df), use_container_width=True)
-with r3_right:
+with r3_r:
     st.plotly_chart(build_top_merchants_bar(merch_df), use_container_width=True)
 
 st.markdown("---")
 
-# Tables
-render_uncategorised_review(df_all, uncat_df)
+render_uncategorised_review(df_all)
 st.markdown("---")
 render_transaction_log(df_full)

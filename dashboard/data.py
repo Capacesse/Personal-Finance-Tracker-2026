@@ -218,18 +218,3 @@ def agg_category_share(df_expenses: pd.DataFrame) -> pd.DataFrame:
     else:
         cat_df["share_pct"] = (cat_df["spent"] / total * 100).round(1)
     return cat_df
-
-
-def agg_uncategorised(df_all: pd.DataFrame) -> pd.DataFrame:
-    """Grouped summary of all Uncategorised transactions for the fix table."""
-    df_uncat = df_all[df_all["category"] == "Uncategorised"].copy()
-    if df_uncat.empty:
-        return pd.DataFrame()
-    return (
-        df_uncat
-        .groupby(["transaction_code", "merchant"])
-        .agg(count=("amount", "count"), total=("amount", "sum"))
-        .reset_index()
-        .sort_values("total")
-        .assign(transaction_code=lambda x: x["transaction_code"].fillna("(none)"))
-    )
