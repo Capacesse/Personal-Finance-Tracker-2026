@@ -224,7 +224,9 @@ def build_income_vs_spend_bar(df_month_scope: pd.DataFrame) -> go.Figure:
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
 def _empty_figure(message: str) -> go.Figure:
-    """Returns a blank figure with a centred message — avoids silent empty plots."""
+    """
+    Returns a blank figure with a centred message, avoiding silent empty plots.
+    """
     fig = go.Figure()
     fig.add_annotation(
         text=message,
@@ -237,5 +239,42 @@ def _empty_figure(message: str) -> go.Figure:
         xaxis=dict(visible=False),
         yaxis=dict(visible=False),
         margin=dict(l=0, r=0, t=0, b=0),
+    )
+    return fig
+
+
+def build_budget_vs_actual_chart(variance_df: pd.DataFrame) -> go.Figure:
+    """
+    Returns a grouped bar chart comparing spend against budget limits.
+    """
+    if variance_df.empty:
+        return px.bar(title="No budget data available")
+
+    # Reshape the data for Plotly Express grouped bars
+    plot_df = variance_df.melt(
+        id_vars=["category"], 
+        value_vars=["spent", "monthly_limit"],
+        var_name="Metric",
+        value_name="Amount"
+    )
+    
+    # Rename for cleaner legend labels
+    plot_df["Metric"] = plot_df["Metric"].map({"spent": "Actual Spend", "monthly_limit": "Budget Limit"})
+
+    fig = px.bar(
+        plot_df, 
+        x="Amount", 
+        y="category", 
+        color="Metric",
+        barmode="group",
+        orientation="h",
+        title="Budget vs Actual Spend (SGD)",
+        labels={"Amount": "", "category": ""},
+        color_discrete_map={"Actual Spend": "#EF553B", "Budget Limit": "#A6B8C7"}
+    )
+    
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=40, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
     )
     return fig

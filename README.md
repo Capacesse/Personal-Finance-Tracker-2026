@@ -27,6 +27,7 @@ A fully local, privacy-first pipeline that:
 3. **Categorises** every transaction using a 5-tier confidence system
 4. **Stores** everything in a normalised SQLite database
 5. **Visualises** your spending in an interactive Streamlit dashboard
+6. **Sets and tracks** monthly budget limits via an interactive UI that writes directly to the SQLite database
 
 No cloud. No credentials shared. Your data never leaves your machine.
 

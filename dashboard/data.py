@@ -93,7 +93,9 @@ def load_all_transactions(db_path: str) -> pd.DataFrame:
 
 @st.cache_data(ttl=300, show_spinner=False)
 def load_category_names(db_path: str) -> list[str]:
-    """All category names from the DB, sorted alphabetically."""
+    """
+    All category names from the DB, sorted alphabetically.
+    """
     if not Path(db_path).exists():
         return []
     conn = sqlite3.connect(db_path)
@@ -160,7 +162,9 @@ def get_full_view(df: pd.DataFrame, state: FilterState) -> pd.DataFrame:
 # ── Aggregations (pre-computed here so charts stay thin) ─────────────────────
 
 def agg_by_category(df_expenses: pd.DataFrame) -> pd.DataFrame:
-    """Total absolute spend per category, sorted descending."""
+    """
+    Total absolute spend per category, sorted descending.
+    """
     return (
         df_expenses
         .groupby("category")["amount"]
@@ -172,7 +176,9 @@ def agg_by_category(df_expenses: pd.DataFrame) -> pd.DataFrame:
 
 
 def agg_monthly_trend(df_expenses: pd.DataFrame) -> pd.DataFrame:
-    """Total spend per (month, category) pair."""
+    """
+    Total spend per (month, category) pair.
+    """
     return (
         df_expenses
         .groupby(["month", "category"])["amount"]
@@ -183,7 +189,9 @@ def agg_monthly_trend(df_expenses: pd.DataFrame) -> pd.DataFrame:
 
 
 def agg_daily_spend(df_expenses: pd.DataFrame) -> pd.DataFrame:
-    """Total spend per (day, category) within the filtered window."""
+    """
+    Total spend per (day, category) within the filtered window.
+    """
     return (
         df_expenses
         .groupby(["day", "category"])["amount"]
@@ -194,7 +202,9 @@ def agg_daily_spend(df_expenses: pd.DataFrame) -> pd.DataFrame:
 
 
 def agg_top_merchants(df_expenses: pd.DataFrame, n: int = 12) -> pd.DataFrame:
-    """Top N merchants by total absolute spend."""
+    """
+    Top N merchants by total absolute spend.
+    """
     return (
         df_expenses
         .groupby(["merchant", "category"])["amount"]
@@ -221,18 +231,27 @@ def agg_category_share(df_expenses: pd.DataFrame) -> pd.DataFrame:
 
 
 def load_budgets(db_path: str) -> pd.DataFrame:
-    """Loads the user's defined budget limits."""
+    """
+    Loads the user's defined budget limits.
+    """
     if not Path(db_path).exists():
         return pd.DataFrame(columns=["category", "monthly_limit"])
         
     conn = sqlite3.connect(db_path)
-    df = pd.read_sql_query("SELECT category, monthly_limit FROM Budgets", conn)
-    conn.close()
+    try:
+        df = pd.read_sql_query("SELECT category, monthly_limit FROM Budgets", conn)
+    except pd.errors.DatabaseError:
+        df = pd.DataFrame(columns=["category", "monthly_limit"])
+    finally:
+        conn.close()
+        
     return df
 
 
 def save_budgets(db_path: str, df_budgets: pd.DataFrame) -> None:
-    """Overwrites the Budgets table with updated limits from the UI."""
+    """
+    Overwrites the Budgets table with updated limits from the UI.
+    """
     conn = sqlite3.connect(db_path)
     # Replace the whole table with the new limits
     df_budgets.to_sql("Budgets", conn, if_exists="replace", index=False)
@@ -240,3 +259,29 @@ def save_budgets(db_path: str, df_budgets: pd.DataFrame) -> None:
     conn.close()
     # Clear the Streamlit cache so the dashboard immediately reflects the new limits
     st.cache_data.clear()
+
+
+def get_budget_variance(df_expenses: pd.DataFrame, df_budgets: pd.DataFrame) -> pd.DataFrame:
+    """
+    Merges actual spend with budget limits for comparison.
+    """
+    # Get current spend per category
+    cat_df = agg_by_category(df_expenses)
+    
+    # Merge with budget limits (Outer join so we see budgets even if spend is 0)
+    merged = pd.merge(
+        df_budgets, 
+        cat_df, 
+        on="category", 
+        how="outer"
+    ).fillna(0) # Replace NaN with 0
+    
+    # Filter out categories that have neither a budget nor any spend
+    merged = merged[(merged["monthly_limit"] > 0) | (merged["spent"] > 0)].copy()
+    
+    # Calculate variance (how much budget is left)
+    merged["remaining"] = merged["monthly_limit"] - merged["spent"]
+    merged["utilisation_pct"] = (merged["spent"] / merged["monthly_limit"].replace(0, 1)) * 100
+    
+    # Sort by utilisation so the most "in danger" categories appear first
+    return merged.sort_values("utilisation_pct", ascending=False)

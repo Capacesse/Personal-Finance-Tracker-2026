@@ -20,6 +20,7 @@ from dashboard.charts import (
     build_income_vs_spend_bar,
     build_monthly_trend_bar,
     build_top_merchants_bar,
+    build_budget_vs_actual_chart
 )
 from dashboard.data import (
     EXCLUDE_FROM_SPEND,
@@ -33,7 +34,8 @@ from dashboard.data import (
     get_month_scoped,
     load_all_transactions,
     load_budgets,
-    save_budgets
+    save_budgets,
+    get_budget_variance
 )
 from dashboard.filters import render_sidebar
 from dashboard.kpis import render_kpi_row
@@ -78,6 +80,13 @@ df_month_scope = get_month_scoped(df_all, state)  # KPIs & income chart
 df_expenses    = get_expense_view(df_all, state)  # all spend charts
 df_full        = get_full_view(df_all, state)     # transaction log
 
+# ── 3.5 Load Budgets early so charts can use them ─────────────────────────────
+df_budgets = load_budgets(DB_PATH)
+
+if df_budgets.empty:
+    all_cats = [c for c in df_all["category"].unique() if c not in EXCLUDE_FROM_SPEND]
+    df_budgets = pd.DataFrame({"category": all_cats, "monthly_limit": 0.0})
+
 # ── 4. Pre-aggregate once — reused by multiple charts ────────────────────────
 
 cat_df   = agg_by_category(df_expenses)
@@ -100,12 +109,15 @@ st.caption(f"Showing {len(df_expenses):,} expense transactions · {months_label}
 render_kpi_row(df_month_scope, df_expenses)
 st.markdown("---")
 
-# Row 1 — Category breakdown + monthly trend
+# ── Row 1 — Category breakdown + Budget vs Actual
 r1_l, r1_r = st.columns(2)
 with r1_l:
     st.plotly_chart(build_category_bar(cat_df), use_container_width=True)
 with r1_r:
-    st.plotly_chart(build_monthly_trend_bar(trend_df), use_container_width=True)
+    # Generate the variance dataframe
+    variance_df = get_budget_variance(df_expenses, df_budgets)
+    # Render the chart
+    st.plotly_chart(build_budget_vs_actual_chart(variance_df), use_container_width=True)
 
 st.markdown("---")
 
@@ -131,13 +143,9 @@ render_uncategorised_review(df_all)
 st.markdown("---")
 render_transaction_log(df_full)
 st.markdown("---")
+
+# ── Interactive Budget Editor ─────────────────────────────────────────────────
 st.subheader("🎯 Monthly Budget Targets")
-
-df_budgets = load_budgets(DB_PATH)
-
-if df_budgets.empty:
-    all_cats = [c for c in df_all["category"].unique() if c not in EXCLUDE_FROM_SPEND]
-    df_budgets = pd.DataFrame({"category": all_cats, "monthly_limit": 0.0})
 
 edited_budgets = st.data_editor(
     df_budgets,

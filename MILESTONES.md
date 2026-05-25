@@ -40,7 +40,7 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 - [x] Split `Transfers` into subcategories: `PayNow & FAST`, `Cash Withdrawals`, `Internal Transfers`
 - [x] Add manual overrides — handled via Tier 0/2 dictionary mappings in `categoriser.py`
 - [x] Category confidence scoring — implemented via the 5-Tier Confidence System architecture
-- [ ] Budget limits per category — store monthly targets in a `Budgets` table and surface warnings when exceeded
+- [x] Budget limits per category — store monthly targets in a `Budgets` table and surface warnings when exceeded
 
 ### Acceptance Criteria
 
@@ -129,4 +129,4 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 
 ## Current Progress
 
-**Milestone 1 Complete.** Working on Budgets Table (Milestone 2) and Dashboard Refinements (Milestone 3).
+**Milestone 1 and 2 Complete.** Working on Dashboard Refinements (Milestone 3).
