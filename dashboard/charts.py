@@ -278,3 +278,23 @@ def build_budget_vs_actual_chart(variance_df: pd.DataFrame) -> go.Figure:
         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
     )
     return fig
+
+
+def build_cumulative_spend_chart(cum_df: pd.DataFrame) -> go.Figure:
+    """
+    Returns an area chart showing cumulative spend over time.
+    """
+    if cum_df.empty:
+        return px.area(title="No data for cumulative spend")
+
+    fig = px.area(
+        cum_df,
+        x="transaction_date",
+        y="cumulative_spend",
+        title="Running Spend Total (SGD)",
+        labels={"cumulative_spend": "", "transaction_date": ""},
+        color_discrete_sequence=["#EF553B"]
+    )
+    
+    fig.update_layout(margin=dict(l=0, r=0, t=40, b=0))
+    return fig

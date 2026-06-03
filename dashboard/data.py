@@ -285,3 +285,24 @@ def get_budget_variance(df_expenses: pd.DataFrame, df_budgets: pd.DataFrame) -> 
     
     # Sort by utilisation so the most "in danger" categories appear first
     return merged.sort_values("utilisation_pct", ascending=False)
+
+
+def agg_cumulative_spend(df_expenses: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates the cumulative sum of expenses over time.
+    """
+    if df_expenses.empty:
+        return pd.DataFrame()
+        
+    # Group by exact date to get the daily total
+    daily = (
+        df_expenses
+        .groupby("transaction_date")["amount"]
+        .sum().abs()
+        .reset_index()
+        .sort_values("transaction_date")
+    )
+    
+    # Calculate the running total
+    daily["cumulative_spend"] = daily["amount"].cumsum()
+    return daily

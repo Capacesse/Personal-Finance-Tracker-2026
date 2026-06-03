@@ -14,28 +14,30 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.charts import (
+    build_budget_vs_actual_chart,
     build_category_bar,
     build_category_share_bar,
+    build_cumulative_spend_chart,
     build_daily_spend_bar,
     build_income_vs_spend_bar,
     build_monthly_trend_bar,
-    build_top_merchants_bar,
-    build_budget_vs_actual_chart
+    build_top_merchants_bar
 )
 from dashboard.data import (
     EXCLUDE_FROM_SPEND,
     agg_by_category,
     agg_category_share,
+    agg_cumulative_spend,
     agg_daily_spend,
     agg_monthly_trend,
     agg_top_merchants,
     get_expense_view,
     get_full_view,
+    get_budget_variance,
     get_month_scoped,
     load_all_transactions,
     load_budgets,
-    save_budgets,
-    get_budget_variance
+    save_budgets
 )
 from dashboard.filters import render_sidebar
 from dashboard.kpis import render_kpi_row
@@ -94,6 +96,7 @@ share_df = agg_category_share(df_expenses)
 trend_df = agg_monthly_trend(df_expenses)
 daily_df = agg_daily_spend(df_expenses)
 merch_df = agg_top_merchants(df_expenses)
+cum_df = agg_cumulative_spend(df_expenses)
 
 # ── 5. Render ─────────────────────────────────────────────────────────────────
 
@@ -143,6 +146,9 @@ render_uncategorised_review(df_all)
 st.markdown("---")
 render_transaction_log(df_full)
 st.markdown("---")
+
+# ── Row 4 — Cumulative Spend Curve
+st.plotly_chart(build_cumulative_spend_chart(cum_df), use_container_width=True)
 
 # ── Interactive Budget Editor ─────────────────────────────────────────────────
 st.subheader("🎯 Monthly Budget Targets")
