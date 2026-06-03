@@ -37,6 +37,7 @@ from dashboard.data import (
     get_month_scoped,
     load_all_transactions,
     load_budgets,
+    load_category_names,
     save_budgets
 )
 from dashboard.filters import render_sidebar
@@ -97,6 +98,7 @@ trend_df = agg_monthly_trend(df_expenses)
 daily_df = agg_daily_spend(df_expenses)
 merch_df = agg_top_merchants(df_expenses)
 cum_df = agg_cumulative_spend(df_expenses)
+valid_cats = load_category_names(DB_PATH)
 
 # ── 5. Render ─────────────────────────────────────────────────────────────────
 
@@ -144,7 +146,7 @@ st.markdown("---")
 
 render_uncategorised_review(df_all)
 st.markdown("---")
-render_transaction_log(df_full)
+render_transaction_log(df_full, valid_cats, DB_PATH)
 st.markdown("---")
 
 # ── Row 4 — Cumulative Spend Curve

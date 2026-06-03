@@ -31,7 +31,7 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 
 ---
 
-## Milestone 2 — Category & Classification Quality 🔄
+## Milestone 2 — Category & Classification Quality ✅
 
 **Goal:** Every transaction lands in a specific, useful budget category.
 
@@ -50,7 +50,7 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 
 ---
 
-## Milestone 3 — Personal Dashboard Completion (`app.py`) 🔄
+## Milestone 3 — Personal Dashboard Completion (`app.py`) ✅
 
 **Goal:** Your own dashboard is fully accurate and feature-complete.
 
@@ -59,10 +59,10 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 - [x] Net Flow bug fix
 - [x] Modular dashboard architecture (`dashboard/` package)
 - [x] Daily spending and month-on-month trend charts
-- [ ] Budget vs Actual bar chart — side-by-side planned vs spent per category
-- [ ] Running monthly total line — cumulative spend curve for the current month
-- [ ] CSV export button — download filtered transactions as a CSV from the UI
-- [ ] Inline category editor — click a transaction in the log table and reassign its category directly from the UI
+- [x] Budget vs Actual bar chart — side-by-side planned vs spent per category
+- [x] Running monthly total line — cumulative spend curve for the current month
+- [x] CSV export button — download filtered transactions as a CSV from the UI
+- [x] Inline category editor — click a transaction in the log table and reassign its category directly from the UI
 
 ### Acceptance Criteria
 
@@ -71,7 +71,7 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 
 ---
 
-## Milestone 4 — Shared App Hardening
+## Milestone 4 — Shared App Hardening 🔄
 
 **Goal:** Friends can use the app reliably with their own bank exports, including banks other than DBS.
 
@@ -129,4 +129,4 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 
 ## Current Progress
 
-**Milestone 1 and 2 Complete.** Working on Dashboard Refinements (Milestone 3).
+**Milestone 1, 2 and 3 Complete.** Working on expanding beyond DBS (Milestone 4's Multi-bank CSV detection).

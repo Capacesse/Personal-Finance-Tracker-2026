@@ -306,3 +306,29 @@ def agg_cumulative_spend(df_expenses: pd.DataFrame) -> pd.DataFrame:
     # Calculate the running total
     daily["cumulative_spend"] = daily["amount"].cumsum()
     return daily
+
+
+def update_merchant_category(db_path: str, merchant_name: str, new_category_name: str) -> None:
+    """
+    Updates the category for a specific merchant directly in the database.
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Look up category_id for new category
+    cursor.execute("SELECT category_id FROM Categories WHERE name = ?", (new_category_name,))
+    cat_result = cursor.fetchone()
+    
+    if cat_result:
+        new_cat_id = cat_result[0]
+        # Update merchant's linked category
+        cursor.execute(
+            "UPDATE Merchants SET category_id = ? WHERE name = ?",
+            (new_cat_id, merchant_name)
+        )
+        conn.commit()
+        
+    conn.close()
+    
+    # Clear StreamLit cached data so the dashboard instantly reflects the change
+    st.cache_data.clear()
