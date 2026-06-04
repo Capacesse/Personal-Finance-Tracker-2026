@@ -1,0 +1,12 @@
+H1,Account Number,Type,Account Currency,Account Name,Date From,Date To,,,,,,,,,,,,,
+H2,1234561234,Current Account,MYR,COMPANY PTE LTD,01/11/2019,06/11/2019,,,,,,,,,,,,,
+D1,Account Number,Value Date,Date,Time,Description,Your Reference,Our Reference,Cheque Number,Teller,Reference3,Reference4,Reference5,Reference6,Reference7,remitter name,purpose of transfer,Deposit,Withdrawal,Ledger Balance
+D2,1234561234,01/11/2019,01/11/2019,2:20:23,Desc 1,123456789,987654321,,,REF DETAILS,,,,,,,11.22,0,"123,456.78"
+D2,1234561234,01/11/2019,01/11/2019,2:20:23,Desc 2,123456789,987654321,,,REF DETAILS,,,,,,,,33.22,"123,456.78"
+T,,,,,,,,,,,,,,,,,"8,888.88","9,999.99",
+,,,,,,,,,,,,,,,,,,,
+H1,Header Desc,,,,,,,,,,,,,,,,,,
+H2,Header2,,,,,,,,,,,,,,,,,,
+D1,Detail Desc,,,,,,,,,,,,,,,,,,
+D2,Detail,,,,,,,,,,,,,,,,,,
+T,Trailer,,,,,,,,,,,,,,,,,,

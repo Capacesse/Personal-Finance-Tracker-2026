@@ -52,6 +52,33 @@ MERCHANT_ALIASES: dict[str, str] = {
     "APPLE.COM/BILL":"APPLE.COM",
 }
 
+# ── Bank-Specific Column Mappings ─────────────────────────────────────────────
+# Maps the specific bank's column headers to our internal standard names.
+# WIP: Expand OCBC and UOB when sample files are obtained.
+
+DBS_MAPPING = {
+    "Transaction Date":  "transaction_date",
+    "Description":       "description",
+    "Withdrawal Amount": "withdrawal",
+    "Deposit Amount":    "deposit",
+    "Transaction Code":  "transaction_code",
+}
+
+# TODO: Update these exact strings when you get a sample OCBC/UOB file
+OCBC_MAPPING = {
+    "Description":      "description",
+    "Transaction Date": "transaction_date", 
+    "Withdrawals":      "withdrawal", # Guessed header
+    "Deposits":         "deposit",    # Guessed header
+}
+
+UOB_MAPPING = {
+    "Transaction Date": "transaction_date",
+    "Transaction Desc": "description", # Guessed header
+    "Withdrawal":       "withdrawal",  # Guessed header
+    "Deposit":          "deposit",     # Guessed header
+}
+
 
 def extract(source: Union[str, BytesIO]) -> pd.DataFrame:
     """
@@ -78,15 +105,30 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     """
     log.info("Transforming %d rows…", len(df))
 
-    # ── Rename ────────────────────────────────────────────────────────────────
-    rename_map = {
-        "Transaction Date":  "transaction_date",
-        "Description":       "description",
-        "Withdrawal Amount": "withdrawal",
-        "Deposit Amount":    "deposit",
-        "Transaction Code":  "transaction_code",
-    }
+    # ── Multi-Bank Fingerprinting & Renaming ──────────────────────────────────
+    columns = set(df.columns)
+    
+    if "Transaction Code" in columns and "Withdrawal Amount" in columns:
+        log.info("Detected DBS/POSB statement format.")
+        rename_map = DBS_MAPPING
+    elif "Withdrawals" in columns: # Replace with actual OCBC unique column
+        log.info("Detected OCBC statement format.")
+        rename_map = OCBC_MAPPING
+    elif "Transaction Desc" in columns: # Replace with actual UOB unique column
+        log.info("Detected UOB statement format.")
+        rename_map = UOB_MAPPING
+    else:
+        # If it doesn't match any known bank, raise a clear error that the 
+        # Streamlit UI can catch and display gracefully.
+        raise ValueError("Unsupported CSV format. Ensure it is a valid DBS, OCBC, or UOB statement.")
+
     df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
+
+    # Ensure required columns exist after renaming
+    required_cols = {"transaction_date", "description", "withdrawal", "deposit"}
+    missing = required_cols - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns after bank mapping: {missing}")
 
     # ── Transaction code ──────────────────────────────────────────────────────
     if "transaction_code" not in df.columns:
