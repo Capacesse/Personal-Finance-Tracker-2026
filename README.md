@@ -2,6 +2,8 @@
 
 > A local, automated data pipeline and interactive dashboard for tracking and analysing DBS/POSB bank transactions — built with Python, Pandas, SQLite, and Streamlit.
 
+[![Tests](https://github.com/Capacesse/Personal-Finance-Tracker-2026/actions/workflows/tests.yml/badge.svg)](https://github.com/Capacesse/Personal-Finance-Tracker-2026/actions/workflows/tests.yml)
+
 ![Dashboard Overview](assets/dashboard_kpis.png)
 
 ---
@@ -118,10 +120,13 @@ dashboard/
 
 | Layer                     | Technology                                  |
 | ------------------------- | ------------------------------------------- |
-| Data ingestion & cleaning | Python 3.11, Pandas                         |
+| Data ingestion & cleaning | Python 3.13, Pandas                         |
 | Storage                   | SQLite (via `sqlite3`)                      |
 | Categorisation            | Python (regex, dict-based keyword matching) |
 | Visualisation             | Streamlit, Plotly                           |
+| Unit tests                | pytest                                      |
+| Browser tests             | Playwright (TypeScript)                     |
+| Continuous integration    | GitHub Actions                              |
 | Version control           | Git / GitHub                                |
 
 ---
@@ -131,7 +136,7 @@ dashboard/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Personal-Finance-Tracker-2026.git
+git clone https://github.com/Capacesse/Personal-Finance-Tracker-2026.git
 cd Personal-Finance-Tracker-2026
 ```
 
@@ -153,7 +158,15 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Add your bank export
+### 4. Try it with the sample data
+
+```bash
+streamlit run app.py
+```
+
+On first run there is no database, so the app builds one from `bank_export_sample.csv` (13 made-up transactions). You can explore the dashboard straight away, then follow the next steps to load your own data.
+
+### 5. Add your bank export
 
 Download from DBS iBanking:
 
@@ -167,7 +180,7 @@ Save as `bank_export.csv` in the project root. See `bank_export_sample.csv` for 
 Transaction Date, Description, Withdrawal Amount, Deposit Amount, Transaction Code
 ```
 
-### 5. Run the ETL pipeline
+### 6. Run the ETL pipeline
 
 ```bash
 # First run — builds the database from scratch
@@ -177,11 +190,36 @@ python etl.py --csv bank_export.csv --reset
 python etl.py --csv bank_export.csv
 ```
 
-### 6. Launch the dashboard
+### 7. Launch the dashboard
 
 ```bash
 streamlit run app.py
 ```
+
+---
+
+## Testing
+
+The project has two automated test suites, both run by GitHub Actions on every push.
+
+| Suite | Tool | Tests | What it checks |
+| ----- | ---- | ----- | -------------- |
+| Unit | pytest | 94 | Date parsing, amount signs, merchant cleaning, the categorisation tiers, deduplication, database totals, filter and budget logic |
+| Browser | Playwright (TypeScript) | 21 | The running dashboard in Chromium: KPI values, sidebar filters, search, CSV export, category editing, statement upload |
+
+```bash
+# Unit tests
+pip install -r requirements-dev.txt
+pytest
+
+# Browser tests (starts the app itself, on a throwaway database)
+cd e2e
+npm install
+npx playwright install chromium
+npx playwright test
+```
+
+Writing the tests uncovered six defects, all fixed and each now covered by a regression test. See [TESTING.md](TESTING.md) for the test approach, the defect log, and what is not covered.
 
 ---
 
@@ -194,6 +232,7 @@ PersonalFinanceProject/
 │   ├── categoriser.py                  # 5-tier confidence system + 80+ keyword map
 │   ├── transformer.py                  # Regex cleaning, date parsing, hash generation
 │   ├── loader.py                       # Schema init, code seeding, dedup insertion
+│   ├── bootstrap.py                    # First-run demo database from the sample CSV
 │   └── schema.sql                      # SQLite DDL (tables, indexes, view)
 │
 ├── dashboard/                          # Modular dashboard package
@@ -202,6 +241,16 @@ PersonalFinanceProject/
 │   ├── charts.py                       # Pure Plotly figure factory
 │   ├── kpis.py                         # KPI metric row
 │   └── tables.py                       # Transaction log + uncategorised review
+│
+├── tests/                              # pytest unit tests
+│
+├── e2e/                                # Playwright browser tests (TypeScript)
+│   ├── tests/                          # Spec files, run in file-name order
+│   ├── pages/dashboard.ts              # Page object: all selectors live here
+│   ├── fixtures/                       # CSV files uploaded by the tests
+│   └── playwright.config.ts
+│
+├── .github/workflows/tests.yml         # CI: runs both suites on every push
 │
 ├── assets/                             # Screenshots for README
 │
@@ -213,6 +262,8 @@ PersonalFinanceProject/
 ├── DBS Transaction Codes & Descriptions.txt
 ├── bank_export_sample.csv
 ├── requirements.txt
+├── requirements-dev.txt
+├── TESTING.md
 ├── MILESTONES.md
 └── README.md
 ```
@@ -225,8 +276,8 @@ Your financial data is **never committed to this repository**. The `.gitignore` 
 
 ```
 bank_export.csv    # your real transaction data
-*.csv              # any CSV that might contain transaction data
-finance.db         # the SQLite database
+temp_upload.csv    # legacy temp file from older versions
+*.db               # the SQLite database
 .env               # secrets and API keys
 ```
 
@@ -240,7 +291,6 @@ See [MILESTONES.md](MILESTONES.md) for the full project roadmap and current prog
 
 ## Requirements
 
-- Python 3.11+
-- `pandas >= 2.0`
-- `streamlit >= 1.35`
-- `plotly >= 5.0`
+- Python 3.11+ (tested on 3.13)
+- Exact package versions are pinned in `requirements.txt`
+- Node.js 20+ for the browser tests only

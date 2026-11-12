@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS Merchants (
 -- amount is always stored as a signed decimal:
 --   negative  → withdrawal / expense
 --   positive  → deposit / income
--- transaction_hash = SHA-256(date || '|' || amount || '|' || description)
+-- transaction_hash = SHA-256(date || '|' || amount || '|' || description),
+-- plus an occurrence number for repeats of the same three values in one file.
 -- Computed in Python before insert; UNIQUE prevents re-import duplicates.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS Transactions (

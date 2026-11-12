@@ -61,13 +61,13 @@ def render_transaction_log(df: pd.DataFrame, valid_categories: list[str], db_pat
                 data=csv_data,
                 file_name="filtered_transactions.csv",
                 mime="text/csv",
-                use_container_width=True
+                width="stretch"
             )
 
         # Inline editor
         edited_df = st.data_editor(
             formatted_display,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             height=420,
             disabled=["Date", "Amount (SGD)", "Code", "Merchant", "Description"], # Lock disabled columns
@@ -124,4 +124,4 @@ def render_uncategorised_review(df_all: pd.DataFrame) -> None:
         .reset_index()
         .sort_values("Total_SGD", ascending=True)
     )
-    st.dataframe(summary, use_container_width=True, hide_index=True)
+    st.dataframe(summary, width="stretch", hide_index=True)

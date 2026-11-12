@@ -13,6 +13,7 @@ import argparse
 import pandas as pd
 import streamlit as st
 
+from core.bootstrap import ensure_database
 from dashboard.charts import (
     build_budget_vs_actual_chart,
     build_category_bar,
@@ -64,12 +65,16 @@ DB_PATH = _db_path()
 
 # ── 1. Load data ──────────────────────────────────────────────────────────────
 
+# First run (fresh clone or cloud deployment): build a demo database from
+# the bundled sample CSV so the dashboard is usable straight away.
+ensure_database(DB_PATH)
+
 df_all = load_all_transactions(DB_PATH)
 
 if df_all.empty:
     st.error(
-        f"No database found at **{DB_PATH}**. "
-        "Run `python etl.py --reset` first."
+        f"The database at **{DB_PATH}** has no transactions. "
+        "Run `python etl.py --reset` to rebuild it."
     )
     st.stop()
 
@@ -117,30 +122,30 @@ st.markdown("---")
 # ── Row 1 — Category breakdown + Budget vs Actual
 r1_l, r1_r = st.columns(2)
 with r1_l:
-    st.plotly_chart(build_category_bar(cat_df), use_container_width=True)
+    st.plotly_chart(build_category_bar(cat_df), width="stretch")
 with r1_r:
     # Generate the variance dataframe
     variance_df = get_budget_variance(df_expenses, df_budgets)
     # Render the chart
-    st.plotly_chart(build_budget_vs_actual_chart(variance_df), use_container_width=True)
+    st.plotly_chart(build_budget_vs_actual_chart(variance_df), width="stretch")
 
 st.markdown("---")
 
 # Row 2 — Category share + income vs spend
 r2_l, r2_r = st.columns(2)
 with r2_l:
-    st.plotly_chart(build_category_share_bar(share_df), use_container_width=True)
+    st.plotly_chart(build_category_share_bar(share_df), width="stretch")
 with r2_r:
-    st.plotly_chart(build_income_vs_spend_bar(df_month_scope), use_container_width=True)
+    st.plotly_chart(build_income_vs_spend_bar(df_month_scope), width="stretch")
 
 st.markdown("---")
 
 # Row 3 — Daily spend + top merchants
 r3_l, r3_r = st.columns(2)
 with r3_l:
-    st.plotly_chart(build_daily_spend_bar(daily_df), use_container_width=True)
+    st.plotly_chart(build_daily_spend_bar(daily_df), width="stretch")
 with r3_r:
-    st.plotly_chart(build_top_merchants_bar(merch_df), use_container_width=True)
+    st.plotly_chart(build_top_merchants_bar(merch_df), width="stretch")
 
 st.markdown("---")
 
@@ -150,14 +155,14 @@ render_transaction_log(df_full, valid_cats, DB_PATH)
 st.markdown("---")
 
 # ── Row 4 — Cumulative Spend Curve
-st.plotly_chart(build_cumulative_spend_chart(cum_df), use_container_width=True)
+st.plotly_chart(build_cumulative_spend_chart(cum_df), width="stretch")
 
 # ── Interactive Budget Editor ─────────────────────────────────────────────────
 st.subheader("🎯 Monthly Budget Targets")
 
 edited_budgets = st.data_editor(
     df_budgets,
-    use_container_width=True,
+    width="stretch",
     num_rows="dynamic", # Lets you add or delete rows
     column_config={
         "category": st.column_config.TextColumn("Category", disabled=True),

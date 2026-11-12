@@ -101,7 +101,7 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         description        normalised uppercase string (original, for audit)
         transaction_code   normalised uppercase code or None
         merchant_name      deduplicated canonical merchant name
-        transaction_hash   SHA-256 of (date|amount|description) — dedup key
+        transaction_hash   SHA-256 of (date|amount|description|occurrence) — dedup key
     """
     log.info("Transforming %d rows…", len(df))
 
@@ -139,13 +139,7 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     # ── Dates ─────────────────────────────────────────────────────────────────
-    # Parse to datetime objects first (handling Day/Month/Year formats)
-    df["transaction_date"] = pd.to_datetime(
-        df["transaction_date"], 
-        format="mixed", 
-        dayfirst=True, 
-        errors="coerce"
-    )
+    df["transaction_date"] = _parse_dates(df["transaction_date"])
 
     bad_dates = df["transaction_date"].isna().sum()
     if bad_dates:
@@ -176,21 +170,30 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     # ── Deduplication hash ────────────────────────────────────────────────────
     # Hash is computed on the raw description (not the cleaned merchant name)
     # so it's stable even if normalisation logic changes in future.
+    #
+    # Two genuine purchases can share a date, amount and description (two
+    # SGD 1.09 bus rides in one day). To keep both, each repeat within the
+    # file gets an occurrence number (0, 1, 2…) that is part of its hash.
+    # Re-importing the same file numbers the rows the same way, so the
+    # hashes match and nothing is inserted twice.
+    df["_occurrence"] = df.groupby(
+        ["transaction_date", "amount", "description"]
+    ).cumcount()
+
+    repeats = int((df["_occurrence"] > 0).sum())
+    if repeats:
+        log.info(
+            "%d row(s) repeat an earlier date, amount and description in this "
+            "file. They are kept as separate transactions.",
+            repeats,
+        )
+
     df["transaction_hash"] = df.apply(
         lambda r: _compute_hash(
-            r["transaction_date"], r["amount"], r["description"]
+            r["transaction_date"], r["amount"], r["description"], r["_occurrence"]
         ),
         axis=1,
     )
-
-    # Warn if the CSV itself contains duplicates (same hash twice)
-    dup_count = df["transaction_hash"].duplicated().sum()
-    if dup_count:
-        log.warning(
-            "%d duplicate rows detected within this CSV and will be dropped.",
-            dup_count,
-        )
-        df = df.drop_duplicates(subset="transaction_hash")
 
     return df[[
         "transaction_date", "year_month", "amount",
@@ -198,14 +201,49 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     ]]
 
 
-def _compute_hash(date: str, amount: float, description: str) -> str:
+_ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}")
+
+
+def _parse_dates(raw: pd.Series) -> pd.Series:
     """
-    Deterministic SHA-256 hash of the three fields that uniquely identify
-    a real bank transaction.  Using SHA-256 (truncated to 16 hex chars)
-    gives 64-bit collision resistance — more than sufficient for personal
+    Parse bank statement dates.
+
+    ISO dates (YYYY-MM-DD) are unambiguous and are parsed as written.
+    Everything else is treated as day-first (02/01/2025 = 2 January), which
+    is how Singapore banks write dates.
+
+    The two cases must be handled separately: applying dayfirst=True to an
+    ISO string makes pandas read 2025-01-02 as 1 February.
+    """
+    raw = raw.astype(str).str.strip()
+    is_iso = raw.str.match(_ISO_DATE)
+
+    parsed = pd.Series(pd.NaT, index=raw.index, dtype="datetime64[ns]")
+    parsed[is_iso] = pd.to_datetime(
+        raw[is_iso].str[:10], format="%Y-%m-%d", errors="coerce"
+    )
+    parsed[~is_iso] = pd.to_datetime(
+        raw[~is_iso], format="mixed", dayfirst=True, errors="coerce"
+    )
+    return parsed
+
+
+def _compute_hash(
+    date: str, amount: float, description: str, occurrence: int = 0
+) -> str:
+    """
+    Deterministic SHA-256 hash identifying one bank transaction.
+    Truncated to 16 hex chars (64 bits), more than sufficient for personal
     transaction volumes.
+
+    occurrence is 0 for the first row with a given date, amount and
+    description, 1 for the second identical row, and so on. The first
+    occurrence is hashed without the number, so hashes stored by earlier
+    versions of this project still match.
     """
     raw = f"{date}|{amount:.2f}|{description}"
+    if occurrence:
+        raw += f"|{int(occurrence)}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
