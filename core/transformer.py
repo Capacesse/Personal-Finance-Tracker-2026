@@ -50,6 +50,7 @@ MERCHANT_ALIASES: dict[str, str] = {
     "FAIRPRICE FINEST":"FAIRPRICE",
     "APPLE COM BILL":"APPLE.COM",
     "APPLE.COM/BILL":"APPLE.COM",
+    "AMZNPRIME":    "AMAZON PRIME",
 }
 
 # ── Bank-Specific Column Mappings ─────────────────────────────────────────────
@@ -263,6 +264,10 @@ def _normalise_merchant(description: str) -> str:
     name = name.replace('FP*FOOD PANDA', 'FOOD PANDA')
     name = name.replace('GOOGLE*YOUTUBEPREMIUM', 'YOUTUBE PREMIUM')
     name = re.sub(r'\s+SG\s*$', '', name)
+
+    # Strip a trailing lone initial left behind by the terminal suffix,
+    # e.g. "YOUTUBE PREMIUM G." -> "YOUTUBE PREMIUM"
+    name = re.sub(r'\s+[A-Z]\.\s*$', '', name)
 
     # 3. Existing logic: Leading digits & Trailing reference codes
     name = _REF_PREFIX.sub("", name)

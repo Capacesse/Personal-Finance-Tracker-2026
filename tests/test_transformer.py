@@ -105,6 +105,29 @@ class TestMerchantNames:
         assert len(_normalise_merchant("A" * 80)) <= 45
 
 
+class TestReadmeExamples:
+    """
+    The four examples in the README's cleaning table, copied exactly.
+    If the README and the code ever disagree again, this fails.
+    """
+
+    @pytest.mark.parametrize(
+        "raw, cleaned",
+        [
+            ("GRAB* GPC-3140FD79BA09 SI SGP 25MAR 5264-7110-0715-3382", "GRAB"),
+            ("GOOGLE*YOUTUBEPREMIUM G. SGP 30NOV 5264-7110-0715-3382", "YOUTUBE PREMIUM"),
+            ("FP*FOOD PANDA SINGAPORE SGP 22APR 5264-7110-0715-3382", "FOOD PANDA"),
+            ("AMZNPRIMESG MEMBERSHI SI SGP 22APR 5264-7110-0715-3382", "AMAZON PRIME"),
+        ],
+    )
+    def test_readme_table_row(self, raw, cleaned):
+        assert _normalise_merchant(raw) == cleaned
+
+    def test_trailing_initial_is_only_stripped_at_the_end(self):
+        # "G." in the middle of a name must survive
+        assert _normalise_merchant("G. H. CAFE") == "G. H. CAFE"
+
+
 # ── Deduplication hash ────────────────────────────────────────────────────────
 
 class TestHash:

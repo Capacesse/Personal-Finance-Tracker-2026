@@ -53,9 +53,8 @@ Raw DBS descriptions contain significant terminal noise. The transformer strips 
 Cleaning pipeline (applied in order):
 
 - Strip country-code terminal suffix: `SI SGP 25MAR 5264-...` → gone
-- Strip `GPC-XXXXXXXXXX` terminal reference codes
-- Strip standalone hex blobs (8+ hex characters)
-- Replace `*` with space (`GOOGLE*YOUTUBE` → `GOOGLE YOUTUBE`)
+- Strip Grab reference codes (GPC-XXXXXXXXXX)
+- Strip `*` reference suffixes (MERCHANT*REF123 → MERCHANT)
 - Strip `FP` prefix (FoodPanda transactions)
 - Strip trailing lone initials (`G.`) and country suffixes (`SG`)
 - Apply canonical alias map (`FAIRPRICE XTRA` → `FAIRPRICE`)
@@ -206,7 +205,7 @@ The project has two automated test suites, both run by GitHub Actions on every p
 
 | Suite | Tool | Tests | What it checks |
 | ----- | ---- | ----- | -------------- |
-| Unit | pytest | 94 | Date parsing, amount signs, merchant cleaning, the categorisation tiers, deduplication, database totals, filter and budget logic |
+| Unit | pytest | 99 | Date parsing, amount signs, merchant cleaning, the categorisation tiers, deduplication, database totals, filter and budget logic |
 | Browser | Playwright (TypeScript) | 26 | The running dashboard in Chromium: KPI values, sidebar filters, search, CSV export, category editing, statement upload |
 
 ```bash
