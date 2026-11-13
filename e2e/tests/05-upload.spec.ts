@@ -35,4 +35,19 @@ test.describe('Uploading a bank statement', () => {
     await expect(page.getByText('0 new transactions added. (3 duplicates skipped)')).toBeVisible();
     await expect(dashboard.totalTransactions).toHaveText(/16 total transactions/);
   });
+
+  test('selecting one month shows only that month', async ({ dashboard }) => {
+  // Arrange: the database now holds January (sample) and February (uploaded)
+  await expect(dashboard.selectedTags('Month(s)')).toHaveText(['2025-01', '2025-02']);
+
+  // Act: deselect January, leaving February only
+  await dashboard.removeTag('Month(s)', '2025-01');
+
+  // Assert: figures worked out by hand from fixtures/february_statement.csv
+  //   spent  = 7.80 + 32.50 = 40.30
+  //   income = 3,500.00
+  await expect(dashboard.kpi('Total Spent')).toHaveText('SGD 40.30');
+  await expect(dashboard.kpi('Total Income')).toHaveText('SGD 3,500.00');
+  await expect(dashboard.summaryCaption).toContainText('Showing 2 expense transactions');
+  });
 });

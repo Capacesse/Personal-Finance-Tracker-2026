@@ -49,4 +49,14 @@ test.describe('Sidebar filters', () => {
     // Assert: the log now shows 8 rows
     await dashboard.expectLogRowCount(8);
   });
+
+  test('clearing the month filter shows all months', async ({ dashboard }) => {
+  // Act
+  await dashboard.removeTag('Month(s)', '2025-01');
+
+  // Assert: same figures as on first load
+  await expect(dashboard.summaryCaption).toContainText(`Showing ${SAMPLE.expenseRows} expense transactions`);
+  await expect(dashboard.kpi('Total Spent')).toHaveText(SAMPLE.totalSpent);
+  await expect(dashboard.kpi('Total Income')).toHaveText(SAMPLE.totalIncome);
+  });
 });
