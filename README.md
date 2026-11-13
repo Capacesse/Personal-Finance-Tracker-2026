@@ -1,8 +1,8 @@
-https://julius-finance-tracker.streamlit.app/
-
 # 💳 Personal Finance Tracker
 
 > A local, automated data pipeline and interactive dashboard for tracking and analysing DBS/POSB bank transactions — built with Python, Pandas, SQLite, and Streamlit.
+
+**Live demo:** [julius-finance-tracker.streamlit.app](https://julius-finance-tracker.streamlit.app/) (sample data only)
 
 [![Tests](https://github.com/Capacesse/Personal-Finance-Tracker-2026/actions/workflows/tests.yml/badge.svg)](https://github.com/Capacesse/Personal-Finance-Tracker-2026/actions/workflows/tests.yml)
 
@@ -33,7 +33,7 @@ A fully local, privacy-first pipeline that:
 5. **Visualises** your spending in an interactive Streamlit dashboard
 6. **Sets and tracks** monthly budget limits via an interactive UI that writes directly to the SQLite database
 
-No cloud. No credentials shared. Your data never leaves your machine.
+No credentials shared. When you run it locally, your data never leaves your machine. The hosted demo uses made-up sample data only.
 
 ---
 
@@ -207,7 +207,7 @@ The project has two automated test suites, both run by GitHub Actions on every p
 | Suite | Tool | Tests | What it checks |
 | ----- | ---- | ----- | -------------- |
 | Unit | pytest | 94 | Date parsing, amount signs, merchant cleaning, the categorisation tiers, deduplication, database totals, filter and budget logic |
-| Browser | Playwright (TypeScript) | 21 | The running dashboard in Chromium: KPI values, sidebar filters, search, CSV export, category editing, statement upload |
+| Browser | Playwright (TypeScript) | 24 | The running dashboard in Chromium: KPI values, sidebar filters, search, CSV export, category editing, statement upload |
 
 ```bash
 # Unit tests
@@ -228,7 +228,7 @@ Writing the tests uncovered six defects, all fixed and each now covered by a reg
 ## Project Structure
 
 ```
-PersonalFinanceProject/
+Personal-Finance-Tracker-2026/
 │
 ├── core/                               # Shared business logic
 │   ├── categoriser.py                  # 5-tier confidence system + 80+ keyword map
