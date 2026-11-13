@@ -34,7 +34,7 @@ On macOS or Linux, where Python is `python3`, run the browser tests as `PYTHON=p
 
 ## How the browser tests are set up
 
-- **Playwright starts the app itself** on port 8601, pointed at a throwaway database in `e2e/.tmp/`. A real `finance.db` is never touched.
+- **The suite starts and stops the app itself** (`global-setup.ts`) on port 8601, pointed at a throwaway database in `e2e/.tmp/`. A real `finance.db` is never touched. Server output is written to `e2e/.tmp/server.log`.
 - **Every run starts from the same data.** `global-setup.ts` deletes the test database, and the app rebuilds it from the sample CSV on first load.
 - **Tests run one at a time, in file-name order.** They share one server and one database, and two spec files change data. The read-only specs (`01` to `03`) run first; `04` restores what it changes; `05` adds rows and runs last.
 - **Selectors live in one place.** `e2e/pages/dashboard.ts` is a page object. Tests say what the user does; the page object knows which element to click.

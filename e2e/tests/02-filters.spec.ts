@@ -38,4 +38,15 @@ test.describe('Sidebar filters', () => {
     await dashboard.setCheckbox('Include Income & Credits', true);
     await dashboard.expectLogRowCount(SAMPLE.allRows);
   });
+
+  test('removing a category hides its rows in the transaction log', async ({ dashboard }) => {
+    // Arrange: open the log
+    await dashboard.openTransactionLog();
+
+    // Act: remove the 'Subscriptions' tag from 'Categories'
+    await dashboard.removeTag('Categories', 'Subscriptions');
+
+    // Assert: the log now shows 8 rows
+    await dashboard.expectLogRowCount(8);
+  });
 });
