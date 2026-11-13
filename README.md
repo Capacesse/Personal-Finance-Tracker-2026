@@ -207,7 +207,7 @@ The project has two automated test suites, both run by GitHub Actions on every p
 | Suite | Tool | Tests | What it checks |
 | ----- | ---- | ----- | -------------- |
 | Unit | pytest | 94 | Date parsing, amount signs, merchant cleaning, the categorisation tiers, deduplication, database totals, filter and budget logic |
-| Browser | Playwright (TypeScript) | 24 | The running dashboard in Chromium: KPI values, sidebar filters, search, CSV export, category editing, statement upload |
+| Browser | Playwright (TypeScript) | 25 | The running dashboard in Chromium: KPI values, sidebar filters, search, CSV export, category editing, statement upload |
 
 ```bash
 # Unit tests

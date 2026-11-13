@@ -52,4 +52,14 @@ test.describe('Transaction log', () => {
     expect(lines[1]).toContain('NETFLIX.COM');
     expect(lines[1]).toContain('-15.98');
   });
+
+  test('search finds a transaction by its description, not only its merchant name', async ({ dashboard }) => {
+    // "xtra" is in the raw description only; the cleaned merchant name is just FAIRPRICE
+    await dashboard.logSearch.fill('xtra');
+    await dashboard.logSearch.press('Enter');
+
+    await dashboard.expectLogRowCount(1);
+    await expect(dashboard.logCell(3, 0)).toHaveText('FAIRPRICE');
+    await expect(dashboard.logCell(5, 0)).toContainText('XTRA');
+  });
 });

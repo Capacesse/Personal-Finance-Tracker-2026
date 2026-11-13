@@ -9,7 +9,7 @@ The app has two layers, and each is tested where it is cheapest to test.
 | Data logic (`core/`, `dashboard/data.py`) | pytest | Pure functions on DataFrames and SQLite. Fast, and a failure points at one function. |
 | The running dashboard | Playwright | Only a real browser shows whether the pieces work together: upload, rerun, cache, widgets. |
 
-Most checks sit in the unit layer (94 tests, about 5 seconds). The browser layer is kept small (21 tests, about 90 seconds) and covers user journeys rather than repeating the unit checks.
+Most checks sit in the unit layer (94 tests, about 5 seconds). The browser layer is kept small (25 tests, about 90 seconds) and covers user journeys rather than repeating the unit checks.
 
 Expected values are worked out by hand from `bank_export_sample.csv`, not copied from the app's output. For example, total spend of SGD 548.45 is the sum of the eleven withdrawal rows in that file.
 
