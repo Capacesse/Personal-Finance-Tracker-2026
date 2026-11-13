@@ -9,7 +9,7 @@ The app has two layers, and each is tested where it is cheapest to test.
 | Data logic (`core/`, `dashboard/data.py`) | pytest | Pure functions on DataFrames and SQLite. Fast, and a failure points at one function. |
 | The running dashboard | Playwright | Only a real browser shows whether the pieces work together: upload, rerun, cache, widgets. |
 
-Most checks sit in the unit layer (94 tests, about 5 seconds). The browser layer is kept small (25 tests, about 90 seconds) and covers user journeys rather than repeating the unit checks.
+Most checks sit in the unit layer (94 tests, about 5 seconds). The browser layer is kept small (26 tests, about two minutes) and covers user journeys rather than repeating the unit checks.
 
 Expected values are worked out by hand from `bank_export_sample.csv`, not copied from the app's output. For example, total spend of SGD 548.45 is the sum of the eleven withdrawal rows in that file.
 
@@ -36,7 +36,7 @@ On macOS or Linux, where Python is `python3`, run the browser tests as `PYTHON=p
 
 - **The suite starts and stops the app itself** (`global-setup.ts`) on port 8601, pointed at a throwaway database in `e2e/.tmp/`. A real `finance.db` is never touched. Server output is written to `e2e/.tmp/server.log`.
 - **Every run starts from the same data.** `global-setup.ts` deletes the test database, and the app rebuilds it from the sample CSV on first load.
-- **Tests run one at a time, in file-name order.** They share one server and one database, and two spec files change data. The read-only specs (`01` to `03`) run first; `04` restores what it changes; `05` adds rows and runs last.
+- **Tests run one at a time, in file-name order.** They share one server and one database, and two spec files change data. The read-only specs (`01` to `03`) run first; `04` restores what it changes; `05` adds rows; `06` saves a budget and runs last.
 - **Selectors live in one place.** `e2e/pages/dashboard.ts` is a page object. Tests say what the user does; the page object knows which element to click.
 - **The transaction table is a canvas.** Playwright cannot read pixels, so the tests read the hidden HTML table the grid keeps for screen readers, and edit cells by keyboard the way a keyboard user would.
 
@@ -52,6 +52,7 @@ Defects found while writing these tests. All are fixed, and each has a regressio
 | 4 | **Uploaded statement left on disk.** `temp_upload.csv` was only deleted on failure, and had been committed to the repository. | A user's bank statement stayed in the project folder in plain text. | Code review while fixing 2 and 3 | Uploads are read from memory. No temp file is written. |
 | 5 | **Two identical purchases on one day stored as one.** The deduplication hash used date, amount and description only. | Two SGD 1.09 bus rides on the same day became a single transaction, so spend was under-reported. | `test_two_identical_purchases_on_one_day_are_both_kept` | Repeats within a file get an occurrence number that is part of the hash. Re-imports still add nothing, and existing databases keep working. |
 | 6 | **App unusable on first run.** With no database the app stopped at an error before the upload box was drawn. | A fresh clone or cloud deployment could not be used without the command line. | `01-dashboard.spec.ts`: first load | Demo database is built from the sample CSV when none exists (`core/bootstrap.py`). |
+| 7 | **Budget save confirmation never shown.** The page reran immediately after displaying "Budgets successfully updated!", wiping the message before it could be seen. | The budget was saved, but the user got no feedback and could not tell whether the save had worked. | Writing `06-budgets.spec.ts`: the test had nothing on screen to wait for after pressing Save | The confirmation is stored and shown after the rerun. |
 
 ## Known limitation
 
@@ -60,7 +61,6 @@ Defects found while writing these tests. All are fixed, and each has a regressio
 ## Not covered
 
 - **Chart contents.** The tests check that all seven charts render, and the numbers behind them are unit tested, but nothing checks the drawn bars.
-- **Budget editor in the browser.** Budget saving and variance are unit tested only.
 - **Tables longer than one screen.** The canvas grid only exposes rows scrolled into view, so the table helpers work for roughly the first eleven rows. Row counts use the "N rows shown" caption instead.
 - **Banks other than DBS/POSB.** The OCBC and UOB mappings are placeholders and have no tests.
 - **Browsers other than Chromium.**

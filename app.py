@@ -178,5 +178,10 @@ edited_budgets = st.data_editor(
 
 if st.button("Save Budget Limits", type="primary"):
     save_budgets(DB_PATH, edited_budgets)
-    st.success("✅ Budgets successfully updated!")
+    # The page reruns straight after saving, which would wipe a message shown
+    # here. Store it and show it on the next run instead.
+    st.session_state["budgets_saved"] = True
     st.rerun()
+
+if st.session_state.pop("budgets_saved", False):
+    st.success("✅ Budgets successfully updated!")

@@ -15,8 +15,8 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 
 ### Deliverables
 
-- [x] `BIDIRECTIONAL_CODES` logic — FAST/GIRO inbound → Income, outbound → Transfers
-- [x] Transaction deduplication — `transaction_hash` UNIQUE column on `Transactions` so re-importing the same CSV never creates duplicate rows
+- [x] `BIDIRECTIONAL_CODES` logic — FAST/GIRO inbound → Income, outbound → PayNow & FAST
+- [x] Transaction deduplication — `transaction_hash` UNIQUE column on `Transactions` so re-importing the same CSV never creates duplicate rows, while genuine identical purchases on the same day are kept
 - [x] Merchant normalisation — strip reference numbers, collapse variants (Regex cleaning in `transformer.py`)
 - [x] Expand `MERCHANT_CATEGORY_MAP` with real-world DBS description patterns (Achieved 100% coverage)
 - [x] Migrate `etl.py` and `app.py` to import from `core/` exclusively
@@ -71,62 +71,84 @@ Nothing built on top of bad data is trustworthy, so this is the foundation.
 
 ---
 
-## Milestone 4 — Shared App Hardening 🔄
+## Milestone 4 — Upload Hardening ✅
 
-**Goal:** Friends can use the app reliably with their own bank exports, including banks other than DBS.
+**Goal:** The in-app upload handles good and bad files predictably.
 
 ### Deliverables
 
-- [ ] Multi-bank CSV detection — auto-detect column formats for OCBC, UOB, Citibank exports and normalise them
-- [ ] Graceful error handling — if the CSV is malformed, show a clear message telling the user exactly which columns are missing
-- [ ] Session comparison — upload two CSVs (e.g. Jan + Feb) and compare them side by side
-- [ ] Shareable summary card — one-click image export of the month KPIs
+- [x] Graceful error handling — a malformed or unsupported CSV shows a clear message naming the missing columns
+- [x] CSV validation on upload — files that do not match a supported bank format are rejected and nothing is written
+- [x] Dashboard refreshes immediately after a successful upload
+- [x] Uploads are read from memory; no copy of the statement is left on disk
 
 ### Acceptance Criteria
 
-- [ ] App handles malformed CSV without crashing (shows user-friendly error)
-- [ ] Successfully processes exports from at least 2 bank formats
+- [x] App handles a malformed CSV without crashing (shows a user-friendly error)
+- [x] Uploading the same statement twice adds no rows
 
 ---
 
-## Milestone 5 — Deployment & Distribution 🔄
+## Milestone 5 — Deployment ✅
 
-**Goal:** Friends can access the app via a URL without installing anything.
+**Goal:** Anyone can try the app via a URL without installing anything.
 
 ### Deliverables
 
 - [x] `README.md` — setup instructions, project structure, how to export from DBS
-- [ ] Streamlit Community Cloud deployment — public URL for `app.py`
-- [ ] Environment config — `.env` or `secrets.toml` pattern for any future API keys
-- [ ] Automated CSV validation on upload — reject files that don't meet the expected schema
+- [x] First-run demo data — with no database, the app builds one from the sample CSV
+- [x] Streamlit Community Cloud deployment — https://julius-finance-tracker.streamlit.app/
+- [x] Pinned dependency versions in `requirements.txt`
 
 ### Acceptance Criteria
 
-- [ ] A friend with zero Python knowledge can use the app via the URL
 - [x] `README.md` covers local setup clearly
-- [ ] App is live at a stable Streamlit Cloud URL
+- [x] App is live at a stable Streamlit Cloud URL
+- [x] A visitor with zero Python knowledge can explore the dashboard via the URL
+
+**Scope note:** the hosted app is a demo on made-up sample data. All visitors share one database, so it is not suitable for real statements. Real use is local.
 
 ---
 
-## Milestone 6 — Intelligence Layer (Stretch Goals) ⬜
+## Milestone 6 — Test Automation & CI ✅
 
-**Goal:** The engine gets smarter over time and reduces manual categorisation work.
+**Goal:** Every change is checked automatically, and known defects cannot quietly return.
 
 ### Deliverables
+
+- [x] pytest unit suite for the pipeline, categoriser, loader and dashboard data layer
+- [x] Playwright (TypeScript) browser suite for the running dashboard
+- [x] GitHub Actions workflow running both suites on every push
+- [x] `TESTING.md` — test approach, defect log, known limitations, what is not covered
+
+### Acceptance Criteria
+
+- [x] Expected values are calculated by hand from the sample CSV, not copied from the app
+- [x] Every defect found has a regression test that fails on the old code
+- [x] Both CI jobs pass on `main`
+
+---
+
+## Backlog (not scheduled)
+
+Ideas that are parked. None are in progress.
+
+**Multi-user and multi-bank**
+
+- [ ] Per-visitor data isolation on the hosted app, so friends can upload their own statements safely
+- [ ] OCBC and UOB export formats (needs real sample files)
+- [ ] Session comparison — upload two CSVs and compare them side by side
+- [ ] Shareable summary card — one-click image export of the month KPIs
+
+**Intelligence layer**
 
 - [ ] Fuzzy merchant clustering — `rapidfuzz` groups near-identical merchant names automatically
 - [ ] Recurring transaction detection — flag subscriptions and regular bills automatically
 - [ ] Anomaly alerts — flag transactions that are unusually large compared to historical averages
 - [ ] Natural language query interface — type "show me food spending in March" and get a filtered view
 
-### Acceptance Criteria
-
-- [ ] Fuzzy clustering reduces unique merchant count by > 20%
-- [ ] Recurring transactions detected with > 90% precision
-- [ ] NL query correctly interprets common query patterns
-
 ---
 
 ## Current Progress
 
-**Milestone 1, 2 and 3 Complete.** Working on expanding beyond DBS (Milestone 4's Multi-bank CSV detection).
+**Milestones 1 to 6 complete.** The app is deployed, tested and under CI. Remaining ideas are in the backlog.

@@ -186,6 +186,66 @@ export class DashboardPage {
     await this.expectCategory(merchant, newCategory);
   }
 
+  // ── Budget editor ──────────────────────────────────────────────────────────
+
+  /** The "Monthly Budget Targets" table at the bottom of the page. */
+  get budgetGrid(): Locator {
+    // It is the last table on the page; the transaction log is the other one.
+    return this.page.getByTestId('stDataFrame').last();
+  }
+
+  /** The Monthly Limit cell on the same row as a category. */
+  budgetCell(category: string): Locator {
+    return this.budgetGrid
+      .locator('tbody tr')
+      .filter({ has: this.page.locator('td[data-testid^="glide-cell-1-"]', { hasText: new RegExp(`^${category}$`) }) })
+      .first()
+      .locator('td[data-testid^="glide-cell-2-"]');
+  }
+
+  /** Assert the limit shown for a category. The table shows plain numbers: 30, not $ 30.00. */
+  async expectBudget(category: string, limit: number): Promise<void> {
+    await expect(this.budgetCell(category)).toHaveText(String(limit));
+  }
+
+  /**
+   * Type a monthly limit for one category. This does NOT save it:
+   * call saveBudgets() afterwards.
+   *
+   * Like the transaction log, this table is a canvas, so the cell is reached
+   * by clicking the first limit cell and moving down with the arrow keys.
+   */
+  async setBudget(category: string, limit: number): Promise<void> {
+    const HEADER_HEIGHT = 36;
+    const ROW_HEIGHT = 35;
+
+    const cell = this.budgetCell(category);
+    await expect(cell).toBeAttached();
+    const id = await cell.getAttribute('data-testid'); // "glide-cell-<column>-<row>"
+    const row = Number(id!.split('-').pop());
+
+    await this.budgetGrid.scrollIntoViewIfNeeded();
+    const box = await this.budgetGrid.boundingBox();
+    // The limit column is the right-hand half of the table.
+    await this.budgetGrid.locator('.dvn-scroller').click({
+      position: { x: box!.width * 0.75, y: HEADER_HEIGHT + ROW_HEIGHT / 2 },
+    });
+    for (let i = 0; i < row; i++) await this.page.keyboard.press('ArrowDown');
+    await expect(cell).toHaveAttribute('aria-selected', 'true');
+
+    // Enter opens a small input box over the cell. Fill it and confirm.
+    await this.page.keyboard.press('Enter');
+    await this.page.locator('#portal input').fill(String(limit));
+    await this.page.keyboard.press('Enter');
+    await expect(cell).toHaveText(String(limit));
+  }
+
+  /** Press "Save Budget Limits" and wait for the app to confirm the save. */
+  async saveBudgets(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Save Budget Limits' }).click();
+    await expect(this.page.getByText('Budgets successfully updated!')).toBeVisible();
+  }
+
   // ── Upload ─────────────────────────────────────────────────────────────────
 
   /** Choose a file from e2e/fixtures and press "Process New Transactions". */
